@@ -79,7 +79,7 @@ export default function SkeletonScene({ state, onReady, onError }: Props) {
     controls.dampingFactor = 0.09;
     controls.minDistance = 0.35;
     controls.maxDistance = 18;
-    controls.autoRotateSpeed = 0.6;
+    controls.autoRotateSpeed = 1;
     controls.enablePan = true;
     controls.addEventListener('change', () => {
       dirty = true;
@@ -279,9 +279,13 @@ export default function SkeletonScene({ state, onReady, onError }: Props) {
           error.message || 'The anatomy could not load.',
         );
     });
+    let previousFrameTime = performance.now();
     const animate = () => {
       if (disposed) return;
       frame = requestAnimationFrame(animate);
+      const now = performance.now();
+      const deltaSeconds = Math.min((now - previousFrameTime) / 1000, 0.1);
+      previousFrameTime = now;
       const current = latest.current;
       const refit =
         !oldState ||
@@ -304,7 +308,7 @@ export default function SkeletonScene({ state, onReady, onError }: Props) {
       }
       controls.autoRotate = current.rotate && ready;
       oldState = current;
-      controls.update();
+      controls.update(deltaSeconds);
       if (dirty || controls.autoRotate) {
         renderer.render(scene, camera);
         dirty = false;
