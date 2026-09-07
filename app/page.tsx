@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { flushSync } from 'react-dom';
 import Image from 'next/image';
 import { AnatomyViewer } from './anatomy-viewer';
@@ -118,24 +118,34 @@ const models: Record<string, { id: string; title: string }> = {
   },
 };
 
+function subscribeToLocation(onChange: () => void) {
+  window.addEventListener('popstate', onChange);
+  return () => window.removeEventListener('popstate', onChange);
+}
+const getLocation = () => window.location.search;
+const getServerLocation = () => '';
+
 export default function Home() {
-  const [selected, setSelected] = useState(2);
-  const [view, setView] = useState('overview');
+  const location = useSyncExternalStore(
+    subscribeToLocation,
+    getLocation,
+    getServerLocation,
+  );
+  const query = new URLSearchParams(location);
+  const sharedIndex = muscles.findIndex((m) => m.name === query.get('muscle'));
+  const sharedView = query.get('view');
+  const [selectionOverride, setSelected] = useState<number | null>(null);
+  const [viewOverride, setView] = useState<string | null>(null);
+  const selected = selectionOverride ?? (sharedIndex >= 0 ? sharedIndex : 2);
+  const view =
+    viewOverride ??
+    (sharedView &&
+    (sharedView === 'overview' || Object.hasOwn(models, sharedView))
+      ? sharedView
+      : 'overview');
   const [copied, setCopied] = useState(false);
   const muscle = muscles[selected];
   useEffect(() => {
-    // Hydrate the browser-only shared URL after SSR has rendered the default view.
-    // oxlint-disable-next-line react(react-compiler)
-    const query = new URLSearchParams(window.location.search);
-    const name = query.get('muscle');
-    const index = muscles.findIndex((m) => m.name === name);
-    if (index >= 0) setSelected(index);
-    const requestedView = query.get('view');
-    if (
-      requestedView &&
-      (requestedView === 'overview' || Object.hasOwn(models, requestedView))
-    )
-      setView(requestedView);
     const registry = (
       document as Document & {
         modelContext?: {
