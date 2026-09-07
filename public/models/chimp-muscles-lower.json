@@ -1,0 +1,94 @@
+{
+  "title": "Common Chimpanzee Lower Limb Reconstruction",
+  "species": "Pan troglodytes",
+  "author": "VISIBLE APE PROJECT",
+  "creator": "José Saúl Martín",
+  "source": "https://sketchfab.com/3d-models/common-chimpanzee-lower-limb-reconstruction-5c1e4c3c8cd645b488050b2711e9395b",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "3D reconstruction by José Saúl Martín, provided by the Visible Ape Project. Licensed under CC BY 4.0. Simplified and normalized for this viewer.",
+  "parts": [
+    {
+      "name": "Lower limb reconstruction",
+      "color": [
+        1,
+        1,
+        1
+      ],
+      "positions": {
+        "offset": 0,
+        "count": 457398,
+        "componentType": "float32",
+        "itemSize": 3,
+        "normalized": false
+      },
+      "normals": {
+        "offset": 1829592,
+        "count": 457398,
+        "componentType": "int16",
+        "itemSize": 3,
+        "normalized": true
+      },
+      "indices": {
+        "offset": 2744388,
+        "count": 899997,
+        "componentType": "uint32",
+        "itemSize": 1,
+        "normalized": false
+      },
+      "colors": {
+        "offset": 6344376,
+        "count": 457398,
+        "componentType": "uint8",
+        "itemSize": 3,
+        "normalized": true
+      }
+    }
+  ],
+  "byteLength": 6801774,
+  "file": "/models/chimp-muscles-lower.bin.gz",
+  "rawFile": "/models/chimp-muscles-lower.bin",
+  "bounds": [
+    [
+      -0.2933208644390106,
+      9.774391855899012e-7,
+      -0.3010919392108917
+    ],
+    [
+      0.2933208644390106,
+      2.3000001907348633,
+      0.3010919392108917
+    ]
+  ],
+  "vertices": 152466,
+  "triangles": 299999,
+  "originalTriangles": 405776,
+  "relativeSimplificationError": 0.00032868425478227437,
+  "originalBounds": [
+    [
+      -0.7299097776412964,
+      -4.382236480712891,
+      -0.7654492855072031
+    ],
+    [
+      0.9872257113456726,
+      2.350001096725464,
+      0.9971789121627813
+    ]
+  ],
+  "normalization": {
+    "origin": [
+      0.1286579668521881,
+      -4.382236480712891,
+      0.11586481332778908
+    ],
+    "uniformScale": 0.3416397555112961
+  },
+  "sourceNodes": [
+    "Object_2",
+    "Object_3",
+    "Object_4",
+    "Object_5"
+  ],
+  "notes": "Regional anatomical reconstruction; source chunks are not individual muscle labels. Original world transforms and vertex colors retained."
+}

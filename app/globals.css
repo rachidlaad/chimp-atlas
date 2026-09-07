@@ -225,7 +225,49 @@ svg {
   font-size: 10px;
   letter-spacing: 0.13em;
   color: #84919b;
-  margin: 25px 8px 9px;
+  margin: 20px 8px 9px;
+}
+.system-options {
+  display: flex !important;
+  gap: 3px !important;
+  padding: 4px;
+  margin-top: 17px;
+  background: #eef1f2;
+  border-radius: 8px;
+}
+.system-options label {
+  position: relative;
+  flex: 1;
+  text-align: center;
+  padding: 10px 6px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #72818b;
+  cursor: pointer;
+}
+.system-options label.active {
+  background: #fff;
+  color: #314b58;
+  box-shadow: 0 2px 6px #2238460a;
+}
+.system-options [data-slot='radio-group-item'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+.system-options label:focus-within {
+  outline: 2px solid #538696;
+}
+.system-options label > span {
+  pointer-events: none;
+}
+.muscle-dot {
+  background: #b9756d;
+}
+.selected .muscle-dot {
+  background: #b25e52;
 }
 .region-list {
   display: flex;
@@ -591,6 +633,13 @@ svg {
   }
 }
 @media (max-width: 767px) {
+  .system-options {
+    margin: 0 0 4px;
+    padding: 2px;
+  }
+  .system-options label {
+    padding: 8px;
+  }
   .identity {
     top: max(22px, env(safe-area-inset-top));
     left: 21px;

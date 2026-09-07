@@ -42,7 +42,21 @@ export const regions = [
 ] as const;
 export type RegionId = (typeof regions)[number]['id'];
 export type View = 'three-quarter' | 'front' | 'side' | 'back';
+export const muscleModels = [
+  {
+    id: 'muscles-head',
+    name: 'Head & neck',
+    caption: 'Head & neck · muscle reconstruction',
+  },
+  {
+    id: 'muscles-lower',
+    name: 'Lower limb',
+    caption: 'Lower limb · muscle reconstruction',
+  },
+] as const;
+export type ModelId = 'skeleton' | (typeof muscleModels)[number]['id'];
 export type SceneState = {
+  model: ModelId;
   region: RegionId;
   view: View;
   rotate: boolean;
@@ -50,6 +64,7 @@ export type SceneState = {
   zoom: number;
 };
 export const initialState: SceneState = {
+  model: 'skeleton',
   region: 'whole',
   view: 'three-quarter',
   rotate: false,

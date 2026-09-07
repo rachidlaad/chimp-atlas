@@ -17,12 +17,12 @@ export const metadata: Metadata = {
     'https://built-different-chimp-lab.xracheed.chatgpt.site',
   ),
   alternates: { canonical: '/' },
-  title: 'Chimp Atlas — 3D Skeleton Explorer',
+  title: 'Chimp Atlas — 3D Anatomy Explorer',
   description:
-    'Explore a complete chimpanzee skeleton in 3D. Rotate, zoom, and focus on the skull, rib cage, pelvis, and lower limbs.',
+    'Explore chimpanzee bones and regional muscle anatomy in 3D. Rotate and zoom through the skeleton, head and neck, and lower limb.',
   openGraph: {
-    title: 'Chimp Atlas — 3D Skeleton Explorer',
-    description: 'A closer look at the chimpanzee skeleton.',
+    title: 'Chimp Atlas — 3D Anatomy Explorer',
+    description: 'A closer look at chimpanzee bones and muscles.',
   },
 };
 

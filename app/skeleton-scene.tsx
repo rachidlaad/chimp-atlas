@@ -9,10 +9,16 @@ import {
   regions,
   type SceneState,
 } from './skeleton-state';
-type Manifest = {
+type Part = {
   positions: { offset: number; count: number };
   normals: { offset: number; count: number };
   indices: { offset: number; count: number };
+  colors?: { offset: number; count: number };
+  color?: number[];
+  name?: string;
+};
+type Manifest = Partial<Part> & {
+  parts?: Part[];
   byteLength: number;
   file: string;
   vertices: number;
@@ -62,7 +68,7 @@ export default function SkeletonScene({ state, onReady, onError }: Props) {
     el.appendChild(renderer.domElement);
     renderer.domElement.setAttribute(
       'aria-label',
-      'Chimpanzee skeleton. Drag to rotate; scroll or pinch to zoom. Camera and region buttons provide keyboard controls.',
+      'Chimpanzee anatomy. Drag to rotate; scroll or pinch to zoom. Camera and region buttons provide keyboard controls.',
     );
     renderer.domElement.setAttribute('role', 'img');
     const scene = new T.Scene();
@@ -120,11 +126,16 @@ export default function SkeletonScene({ state, onReady, onError }: Props) {
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.04;
     scene.add(ground);
-    let mesh: T.Mesh<T.BufferGeometry, T.MeshStandardMaterial> | undefined;
+    const anatomy = new T.Group();
+    scene.add(anatomy);
+    let modelWidth = 1.1;
     let oldState: SceneState | undefined;
     const fit = () => {
       const s = latest.current;
-      const region = regions.find((r) => r.id === s.region)!;
+      const region =
+        s.model === 'skeleton'
+          ? regions.find((r) => r.id === s.region)!
+          : { center: [0, 1.15, 0] as const, height: 2.3, width: modelWidth };
       const center = new T.Vector3(...region.center);
       const distance = cameraDistance(
         region.height,
@@ -133,7 +144,13 @@ export default function SkeletonScene({ state, onReady, onError }: Props) {
         el.clientHeight,
       );
       const direction = new T.Vector3()
-        .fromArray([...cameraDirections[s.view]])
+        .fromArray(
+          s.model === 'muscles-head' && s.view === 'three-quarter'
+            ? [0.9, 0.1, 1]
+            : s.model === 'muscles-head' && s.view === 'side'
+              ? [1, 0, 0]
+              : [...cameraDirections[s.view]],
+        )
         .normalize();
       controls.target.copy(center);
       camera.position.copy(center).addScaledVector(direction, distance);
@@ -159,21 +176,24 @@ export default function SkeletonScene({ state, onReady, onError }: Props) {
     };
     renderer.domElement.addEventListener('webglcontextlost', contextLost);
     const load = async () => {
-      const metaResponse = await fetch('/models/chimp-skeleton.json', {
-        signal: abort.signal,
-      });
+      const metaResponse = await fetch(
+        `/models/chimp-${latest.current.model}.json`,
+        {
+          signal: abort.signal,
+        },
+      );
       if (!metaResponse.ok)
         throw new Error(
-          'The skeleton information could not load. Please retry.',
+          'The anatomy information could not load. Please retry.',
         );
       const meta: Manifest = await metaResponse.json();
       const compressed = typeof DecompressionStream !== 'undefined';
       const response = await fetch(
-        compressed ? meta.file : '/models/chimp-skeleton.bin',
+        compressed ? meta.file : meta.file.replace(/\.gz$/, ''),
         { signal: abort.signal },
       );
       if (!response.ok)
-        throw new Error('The skeleton download failed. Please retry.');
+        throw new Error('The anatomy download failed. Please retry.');
       const downloaded = await response.arrayBuffer();
       const prefix = new Uint8Array(
         downloaded,
@@ -190,40 +210,65 @@ export default function SkeletonScene({ state, onReady, onError }: Props) {
           : downloaded;
       if (disposed) return;
       if (buffer.byteLength !== meta.byteLength)
-        throw new Error('The skeleton download was incomplete. Please retry.');
-      const geometry = new T.BufferGeometry();
-      geometry.setAttribute(
-        'position',
-        new T.BufferAttribute(
-          new Float32Array(buffer, meta.positions.offset, meta.positions.count),
-          3,
-        ),
-      );
-      geometry.setAttribute(
-        'normal',
-        new T.BufferAttribute(
-          new Int16Array(buffer, meta.normals.offset, meta.normals.count),
-          3,
-          true,
-        ),
-      );
-      geometry.setIndex(
-        new T.BufferAttribute(
-          new Uint32Array(buffer, meta.indices.offset, meta.indices.count),
-          1,
-        ),
-      );
-      geometry.computeBoundingSphere();
-      mesh = new T.Mesh(
-        geometry,
-        new T.MeshStandardMaterial({
-          color: '#ded4b9',
-          metalness: 0.03,
-          roughness: 0.54,
-          side: T.DoubleSide,
-        }),
-      );
-      scene.add(mesh);
+        throw new Error('The anatomy download was incomplete. Please retry.');
+      const parts = meta.parts || [meta as Part];
+      for (const part of parts) {
+        const geometry = new T.BufferGeometry();
+        geometry.setAttribute(
+          'position',
+          new T.BufferAttribute(
+            new Float32Array(
+              buffer,
+              part.positions.offset,
+              part.positions.count,
+            ),
+            3,
+          ),
+        );
+        geometry.setAttribute(
+          'normal',
+          new T.BufferAttribute(
+            new Int16Array(buffer, part.normals.offset, part.normals.count),
+            3,
+            true,
+          ),
+        );
+        geometry.setIndex(
+          new T.BufferAttribute(
+            new Uint32Array(buffer, part.indices.offset, part.indices.count),
+            1,
+          ),
+        );
+        geometry.computeBoundingSphere();
+        if (part.colors) {
+          geometry.setAttribute(
+            'color',
+            new T.BufferAttribute(
+              new Uint8Array(buffer, part.colors.offset, part.colors.count),
+              3,
+              true,
+            ),
+          );
+        }
+        const mesh = new T.Mesh(
+          geometry,
+          new T.MeshStandardMaterial({
+            color: part.color
+              ? new T.Color().fromArray(part.color)
+              : part.colors
+                ? '#ffffff'
+                : '#ded4b9',
+            vertexColors: Boolean(part.colors),
+            metalness: 0.03,
+            roughness: 0.54,
+            side: T.DoubleSide,
+          }),
+        );
+        mesh.name = part.name || latest.current.model;
+        anatomy.add(mesh);
+      }
+      const size = new T.Box3().setFromObject(anatomy).getSize(new T.Vector3());
+      modelWidth = Math.max(size.x, size.z);
       ready = true;
       fit();
       callbacks.current.onReady();
@@ -231,7 +276,7 @@ export default function SkeletonScene({ state, onReady, onError }: Props) {
     void load().catch((error) => {
       if (!disposed && error.name !== 'AbortError')
         callbacks.current.onError(
-          error.message || 'The skeleton could not load.',
+          error.message || 'The anatomy could not load.',
         );
     });
     const animate = () => {

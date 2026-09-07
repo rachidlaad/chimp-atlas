@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Scan,
   Focus,
+  Layers,
 } from 'lucide-react';
 import {
   Dialog,
@@ -25,6 +26,8 @@ import SkeletonScene from './skeleton-scene';
 import {
   initialState,
   regions,
+  muscleModels,
+  type ModelId,
   type View,
   type RegionId,
 } from './skeleton-state';
@@ -43,8 +46,17 @@ export default function Home() {
   const onReady = useCallback(() => setReady(true), []);
   const onError = useCallback((message: string) => setError(message), []);
   const region = regions.find((r) => r.id === state.region)!;
+  const isSkeleton = state.model === 'skeleton';
+  const muscleModel = muscleModels.find((m) => m.id === state.model);
+  const changeModel = (model: ModelId) => {
+    if (model !== state.model) {
+      setReady(false);
+      setError('');
+    }
+    setState((s) => ({ ...initialState, model, reset: s.reset + 1 }));
+  };
   const reset = () =>
-    setState((s) => ({ ...initialState, reset: s.reset + 1 }));
+    setState((s) => ({ ...initialState, model: s.model, reset: s.reset + 1 }));
   const focus = (id: RegionId) =>
     setState((s) => ({ ...s, region: id, rotate: false, reset: s.reset + 1 }));
   useEffect(() => {
@@ -91,9 +103,11 @@ export default function Home() {
                   !views.some((v) => v.id === value.view))
               )
                 throw new Error('Unknown skeleton region or camera angle.');
+              if (state.model !== 'skeleton') setReady(false);
               flushSync(() =>
                 setState((s) => ({
                   ...s,
+                  model: 'skeleton',
                   region: value.region as RegionId,
                   view: (value.view as View) || 'three-quarter',
                   rotate: false,
@@ -113,11 +127,11 @@ export default function Home() {
       /* Optional browser capability. */
     }
     return () => lifecycle.abort();
-  }, []);
+  }, [state.model]);
   return (
     <main className="studio">
       <SkeletonScene
-        key={attempt}
+        key={`${state.model}-${attempt}`}
         state={state}
         onReady={onReady}
         onError={onError}
@@ -132,12 +146,13 @@ export default function Home() {
         </h1>
         <p>
           <i>Pan troglodytes</i>
-          <span> / </span>Skeleton
+          <span> / </span>
+          {isSkeleton ? 'Skeleton' : 'Muscles'}
         </p>
       </header>
       <button
         className="info-button glass"
-        aria-label="About the skeleton and sources"
+        aria-label="About the anatomy and sources"
         onClick={() => setInfo(true)}
       >
         <Info size={18} />
@@ -145,43 +160,77 @@ export default function Home() {
       </button>
       <section
         className="regions-panel glass"
-        aria-label="Focus the camera on a skeletal region"
+        aria-label="Anatomy and region controls"
       >
         <div className="panel-heading">
           <span>
-            <Bone size={16} /> Skeletal anatomy
+            <Layers size={16} /> Anatomy
           </span>
-          <span className="count">01</span>
+          <span className="count">02</span>
         </div>
-        <p className="panel-label">FOCUS REGION</p>
-        <div className="region-list">
-          {regions.map((r) => (
-            <button
-              key={r.id}
-              aria-pressed={state.region === r.id}
-              onClick={() => focus(r.id)}
-              disabled={!ready}
-              className={state.region === r.id ? 'selected' : ''}
+        <RadioGroup
+          className="system-options"
+          value={isSkeleton ? 'skeleton' : 'muscles'}
+          onValueChange={(value) =>
+            changeModel(value === 'skeleton' ? 'skeleton' : 'muscles-head')
+          }
+          aria-label="Anatomical system"
+        >
+          {['Skeleton', 'Muscles'].map((label) => (
+            <label
+              key={label}
+              className={isSkeleton === (label === 'Skeleton') ? 'active' : ''}
             >
-              <span className="region-dot" />
-              <span className="region-full-name">{r.name}</span>
-              <span className="region-short-name">
-                {
-                  {
-                    whole: 'All',
-                    skull: 'Skull',
-                    thorax: 'Ribs',
-                    pelvis: 'Pelvis',
-                    legs: 'Legs',
-                  }[r.id]
-                }
-              </span>
-              <ChevronRight size={15} />
-            </button>
+              <RadioGroupItem value={label.toLowerCase()} aria-label={label} />
+              <span>{label}</span>
+            </label>
           ))}
+        </RadioGroup>
+        <p className="panel-label">
+          {isSkeleton ? 'FOCUS REGION' : 'MUSCLE REGION'}
+        </p>
+        <div className="region-list">
+          {isSkeleton
+            ? regions.map((r) => (
+                <button
+                  key={r.id}
+                  aria-pressed={state.region === r.id}
+                  onClick={() => focus(r.id)}
+                  disabled={!ready}
+                  className={state.region === r.id ? 'selected' : ''}
+                >
+                  <span className="region-dot" />
+                  <span className="region-full-name">{r.name}</span>
+                  <span className="region-short-name">
+                    {
+                      {
+                        whole: 'All',
+                        skull: 'Skull',
+                        thorax: 'Ribs',
+                        pelvis: 'Pelvis',
+                        legs: 'Legs',
+                      }[r.id]
+                    }
+                  </span>
+                  <ChevronRight size={15} />
+                </button>
+              ))
+            : muscleModels.map((m) => (
+                <button
+                  key={m.id}
+                  aria-pressed={state.model === m.id}
+                  onClick={() => changeModel(m.id)}
+                  className={state.model === m.id ? 'selected' : ''}
+                >
+                  <span className="region-dot muscle-dot" />
+                  <span>{m.name}</span>
+                  <ChevronRight size={15} />
+                </button>
+              ))}
         </div>
         <div className="panel-foot">
-          <span className="status-dot" /> CT-derived specimen
+          <span className="status-dot" />{' '}
+          {isSkeleton ? 'CT-derived specimen' : 'Regional 3D reconstructions'}
         </div>
       </section>
       <div className="zoom-controls glass" aria-label="Zoom controls">
@@ -201,11 +250,7 @@ export default function Home() {
           <Minus size={18} />
         </button>
         <span />
-        <button
-          onClick={reset}
-          aria-label="Fit whole skeleton"
-          disabled={!ready}
-        >
+        <button onClick={reset} aria-label="Fit whole model" disabled={!ready}>
           <Scan size={18} />
         </button>
       </div>
@@ -215,8 +260,11 @@ export default function Home() {
             <Bone size={24} />
           </div>
           <div>
-            <strong>Loading the skeleton</strong>
-            <p>Preparing the complete 3D scan…</p>
+            <strong>
+              Loading{' '}
+              {isSkeleton ? 'the skeleton' : muscleModel?.name.toLowerCase()}
+            </strong>
+            <p>Preparing the 3D anatomy…</p>
             <div className="loading-track">
               <span />
             </div>
@@ -225,7 +273,7 @@ export default function Home() {
       )}
       {error && (
         <div className="loading error glass">
-          <strong>Let’s reload the skeleton.</strong>
+          <strong>Let’s reload the anatomy.</strong>
           <p>{error}</p>
           <button
             onClick={() => {
@@ -241,7 +289,7 @@ export default function Home() {
       )}
       <div className="scene-caption">
         <span />
-        {region.caption.toUpperCase()}
+        {(isSkeleton ? region.caption : muscleModel!.caption).toUpperCase()}
         <span />
       </div>
       <div className="bottom-dock glass">
@@ -271,6 +319,7 @@ export default function Home() {
         <div className="dock-divider" />
         <button
           className={'dock-button ' + (state.rotate ? 'active' : '')}
+          aria-label={state.rotate ? 'Pause rotation' : 'Rotate model'}
           aria-pressed={state.rotate}
           onClick={() => setState((s) => ({ ...s, rotate: !s.rotate }))}
           disabled={!ready}
@@ -278,7 +327,12 @@ export default function Home() {
           {state.rotate ? <Pause size={17} /> : <Play size={17} />}
           <span>{state.rotate ? 'Pause' : 'Rotate'}</span>
         </button>
-        <button className="dock-button" onClick={reset} disabled={!ready}>
+        <button
+          className="dock-button"
+          aria-label="Reset view"
+          onClick={reset}
+          disabled={!ready}
+        >
           <RotateCcw size={17} />
           <span>Reset</span>
         </button>
@@ -297,17 +351,18 @@ export default function Home() {
             <Focus size={16} /> THE SPECIMEN
           </div>
           <DialogTitle className="about-title">
-            A closer look at the chimp skeleton.
+            A closer look at chimp anatomy.
           </DialogTitle>
           <DialogDescription className="about-description">
-            A complete adult common chimpanzee skeleton reconstructed from CT
-            imaging. The scan retains the specimen’s original posture, including
-            its turned head and bent legs.
+            Explore the complete adult common chimpanzee skeleton, plus separate
+            head-and-neck and lower-limb muscle reconstructions from the Visible
+            Ape Project.
           </DialogDescription>
           <p>
-            This viewer moves the camera around one continuous skeletal surface.
-            Region controls focus the view; they do not separate individual
-            bones.
+            The skeleton preserves the CT specimen’s turned head and bent legs.
+            Bone controls focus the camera. Muscle views load distinct regional
+            models with their original anatomical colors; they are not a
+            complete body muscle layer over this skeleton.
           </p>
           <div className="source-block">
             <strong>Model & license</strong>
@@ -326,6 +381,13 @@ export default function Home() {
               Original CT-based skeleton <ArrowUpRight size={15} />
             </a>
             <a
+              href="https://www.visibleapeproject.com/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Muscle reconstructions <ArrowUpRight size={15} />
+            </a>
+            <a
               href="https://creativecommons.org/licenses/by/4.0/"
               target="_blank"
               rel="noreferrer"
@@ -338,6 +400,14 @@ export default function Home() {
               archive.
             </p>
           </div>
+          <a
+            className="reference-link"
+            href="/ATTRIBUTION.md"
+            target="_blank"
+            rel="noreferrer"
+          >
+            All model sources & adaptation notes <ArrowUpRight size={15} />
+          </a>
           <a
             className="reference-link"
             href="https://github.com/ashemag/human-atlas"

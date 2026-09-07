@@ -1,15 +1,18 @@
 # Chimp Atlas
 
-A minimal, interactive 3D skeleton explorer for the common chimpanzee (*Pan troglodytes*), built with React, Three.js, and Vinext.
+A minimal, interactive 3D anatomy explorer for the common chimpanzee (_Pan troglodytes_), built with React, Three.js, and Vinext.
 
 ## Features
 
 - Orbit and zoom around a complete CT-derived chimpanzee skeleton.
+- Switch to separate head-and-neck and lower-limb muscle reconstructions with original anatomical colors.
 - Focus the camera on the skull, rib cage, pelvis, or lower limbs.
 - Switch between three-quarter, front, side, and back views.
 - Automatic rotation, reset controls, and a responsive interface.
 
 The original specimen's turned head and bent legs are preserved. The scan is a continuous surface, not individually segmented bones: region controls focus the camera, and an exploded-bone slider is not implemented.
+
+Muscle selections load distinct regional models, not a full-body muscle layer over the skeleton. The head model includes exposed muscles on one half and outer anatomy on the other.
 
 ## Run locally
 
