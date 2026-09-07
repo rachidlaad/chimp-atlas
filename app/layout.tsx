@@ -17,12 +17,12 @@ export const metadata: Metadata = {
     'https://built-different-chimp-lab.xracheed.chatgpt.site',
   ),
   alternates: { canonical: '/' },
-  title: 'PRIMAL — Built Different. The Chimp Anatomy Lab.',
+  title: 'Chimp Atlas — 3D Skeleton Explorer',
   description:
-    'The internet picked a fight. Meet the anatomy: explore chimpanzee muscles in 3D and the research behind the MMA-versus-chimp debate.',
+    'Explore a complete chimpanzee skeleton in 3D. Rotate, zoom, and focus on the skull, rib cage, pelvis, and lower limbs.',
   openGraph: {
-    title: 'Confidence isn’t a muscle group. | PRIMAL',
-    description: 'Explore chimp muscles in 3D. Real anatomy. Actual papers.',
+    title: 'Chimp Atlas — 3D Skeleton Explorer',
+    description: 'A closer look at the chimpanzee skeleton.',
   },
 };
 
